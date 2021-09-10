@@ -2,23 +2,18 @@
 
 const fs = require( "fs" )
 const path = require( "path" )
-const os = require( 'os' )
 const childProcess = require( "child_process" )
 const electron = require( "electron" )
-
 const common = require( "./lib/common" )
 const contentBlocking = require( "./lib/contentBlocking/contentBlockingMain" )
 const encodingLib = require( "./lib/main/encoding" )
 const ipc = require( "./lib/ipc" )
 const navigation = require( "./lib/navigation/navigationMain" )
 const rawText = require( "./lib/rawText/rawTextMain" )
-
 const ApplicationSettings = require( './lib/settings/application-settings' )
 const DocumentSettings = require( './lib/settings/document-settings' )
-const { showSuccess, showSuccessModal } = require( './lib/messageBoxes/success' )
-const { showError } = require( './lib/messageBoxes/error' )
-const { changeFileExtension } = require( './lib/file' )
-const { BrowserWindow } = require( 'electron' )
+const { printToPDF } = require( './lib/pdf' )
+const { generateStylesSubmenu } = require( './lib/styler/highlightjs' )
 
 const WINDOW_WIDTH = 1024
 const WINDOW_HEIGHT = 768
@@ -91,65 +86,6 @@ function restorePosition() {
   _mainWindow.webContents.send( ipc.messages.restorePosition, _scrollPosition )
 }
 
-function generateStylesSubmenu() {
-  let cssFolder = path.join( __dirname, "css" )
-  let cssFilesFromDir = fs.readdirSync( cssFolder )
-  let codeStyleSubmenu = []
-  cssFilesFromDir.forEach( file => {
-    if ( path.extname( file ) == ".css" ) {
-      let filename = path.basename( file, ".css" )
-      codeStyleSubmenu.push( {
-        label: filename,
-        type: "radio",
-        id: filename,
-        click() {
-          _applicationSettings.highlightjsStyle = filename
-          _mainWindow.webContents.send( ipc.messages.changeHighlightjsStyle, filename )
-        },
-      } )
-    }
-  } )
-  return codeStyleSubmenu
-}
-
-function _printToPDF() {
-  const PDF_OPTIONS = { marginsType: 0, pageSize: 'A4', printBackground: true, printSelectionOnly: false, landscape: false }
-  const ERROR_MESSAGE = 'The PDF document could not be generated';
-  const DEFAULT_FILEPATH = path.join( os.homedir(), 'Desktop', 'mdview-export.pdf' )
-  const FILEPATH = navigation.hasCurrentLocation() ? changeFileExtension( navigation.getCurrentLocation().filePath, '.pdf' ) : DEFAULT_FILEPATH;
-  const FOCUSED_WINDOW = BrowserWindow.getFocusedWindow()
-
-  electron.dialog.showSaveDialog( {
-    title: 'Save the PDF file as',
-    defaultPath: FILEPATH,
-    filters: [{ name: 'PDF files', extensions: ['pdf'] },],
-    properties: []
-  } )
-    .then( file => {
-      if ( !file.canceled ) {
-        let pdfFilePath = file.filePath.toString();
-        let win = FOCUSED_WINDOW;
-        win.webContents.printToPDF( PDF_OPTIONS ).then( data => {
-          fs.writeFile( pdfFilePath, data, function ( err ) {
-            if ( err ) {
-              showError( ERROR_MESSAGE, error.message )
-              console.error( err );
-            } else {
-              showSuccessModal( 'The PDF document has been successfully generated', pdfFilePath );
-            }
-          } );
-        } ).catch( error => {
-          showError( ERROR_MESSAGE, error.message )
-          console.error( error )
-        } );
-
-      }
-    } ).catch( err => {
-      showError( ERROR_MESSAGE, error.message )
-      console.error( err )
-    } );
-}
-
 function createWindow() {
   const mainWindow = new electron.BrowserWindow( {
     width: WINDOW_WIDTH,
@@ -178,8 +114,6 @@ function createWindow() {
       navigation.back()
     }
   } )
-
-  let codeStyleSubmenu = generateStylesSubmenu()
 
   const mainMenu = electron.Menu.buildFromTemplate( [
     {
@@ -220,7 +154,7 @@ function createWindow() {
         {
           label: "Print to PDF",
           click() {
-            _printToPDF()
+            printToPDF()
           },
         },
         { type: "separator" },
@@ -291,7 +225,7 @@ function createWindow() {
         },
         {
           label: "Change Code Style",
-          submenu: codeStyleSubmenu,
+          submenu: generateStylesSubmenu(),
         },
       ],
     },
