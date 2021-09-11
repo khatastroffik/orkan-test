@@ -9,7 +9,15 @@ const { changeFileExtension } = require( './file' )
 const navigation = require( "./navigation/navigationMain" )
 
 function printToPDF() {
-  const PDF_OPTIONS = { marginsType: 0, pageSize: 'A4', printBackground: true, printSelectionOnly: false, landscape: false }
+  const PDF_OPTIONS = { 
+    // headerFooter: { title: "", url: "printed by MDview"}, // not working properly
+    scaleFactor: 90,
+    marginsType: 0, 
+    pageSize: 'A4', 
+    printBackground: true, // the "code" background is not visible otherwise
+    printSelectionOnly: false,
+    landscape: false
+  }
   const ERROR_MESSAGE = 'The PDF document could not be generated';
   const DEFAULT_FILEPATH = path.join( os.homedir(), 'Desktop', 'mdview-export.pdf' )
   const FILEPATH = navigation.hasCurrentLocation() ? changeFileExtension( navigation.getCurrentLocation().filePath, '.pdf' ) : DEFAULT_FILEPATH;
