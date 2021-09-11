@@ -2,19 +2,18 @@
 
 const fs = require( "fs" )
 const path = require( "path" )
-
 const childProcess = require( "child_process" )
 const electron = require( "electron" )
-
 const common = require( "./lib/common" )
 const contentBlocking = require( "./lib/contentBlocking/contentBlockingMain" )
 const encodingLib = require( "./lib/main/encoding" )
 const ipc = require( "./lib/ipc" )
 const navigation = require( "./lib/navigation/navigationMain" )
 const rawText = require( "./lib/rawText/rawTextMain" )
-
 const ApplicationSettings = require( './lib/settings/application-settings' )
 const DocumentSettings = require( './lib/settings/document-settings' )
+const { printToPDF } = require( './lib/pdf' )
+const { generateStylesSubmenu } = require( './lib/styler/highlightjs' )
 
 const WINDOW_WIDTH = 1024
 const WINDOW_HEIGHT = 768
@@ -87,27 +86,6 @@ function restorePosition() {
   _mainWindow.webContents.send( ipc.messages.restorePosition, _scrollPosition )
 }
 
-function generateStylesSubmenu() {
-  let cssFolder = path.join( __dirname, "css" )
-  let cssFilesFromDir = fs.readdirSync( cssFolder )
-  let codeStyleSubmenu = []
-  cssFilesFromDir.forEach( file => {
-    if ( path.extname( file ) == ".css" ) {
-      let filename = path.basename( file, ".css" )
-      codeStyleSubmenu.push( {
-        label: filename,
-        type: "radio",
-        id: filename,
-        click() {
-          _applicationSettings.highlightjsStyle = filename
-          _mainWindow.webContents.send( ipc.messages.changeHighlightjsStyle, filename )
-        },
-      } )
-    }
-  } )
-  return codeStyleSubmenu
-}
-
 function createWindow() {
   const mainWindow = new electron.BrowserWindow( {
     width: WINDOW_WIDTH,
@@ -137,8 +115,6 @@ function createWindow() {
     }
   } )
 
-  let codeStyleSubmenu = generateStylesSubmenu()
-
   const mainMenu = electron.Menu.buildFromTemplate( [
     {
       label: "File",
@@ -160,18 +136,25 @@ function createWindow() {
               if ( !result.canceled ) {
                 const filePath = result.filePaths[0]
                 openFile( filePath, null )
-                _mainMenu.getMenuItemById( encodingLib.toMenuItemID( _documentSettings.getDocumentEncoding(filePath) ) ).checked = true
+                _mainMenu.getMenuItemById( encodingLib.toMenuItemID( _documentSettings.getDocumentEncoding( filePath ) ) ).checked = true
               }
             } catch ( e ) {
               error( `Problem at opening file:\n ${e}` )
             }
           },
         },
+        { type: "separator" },
         {
           label: "Print",
           accelerator: "Ctrl+P",
           click() {
             mainWindow.webContents.print()
+          },
+        },
+        {
+          label: "Print to PDF",
+          click() {
+            printToPDF()
           },
         },
         { type: "separator" },
@@ -242,7 +225,7 @@ function createWindow() {
         },
         {
           label: "Change Code Style",
-          submenu: codeStyleSubmenu,
+          submenu: generateStylesSubmenu(),
         },
       ],
     },
@@ -323,7 +306,7 @@ electron.ipcMain.on( ipc.messages.finishLoad, () => {
     openFile( DEFAULT_FILE, internalTarget )
   }
   // initialize the ENCODING menu item
-  _mainMenu.getMenuItemById( encodingLib.toMenuItemID( _documentSettings.getDocumentEncoding(filePath??DEFAULT_FILE) ) ).checked = true
+  _mainMenu.getMenuItemById( encodingLib.toMenuItemID( _documentSettings.getDocumentEncoding( filePath ?? DEFAULT_FILE ) ) ).checked = true
   // initialize the HIGHLIGHTJS STYLE and the corresponding menu item after (!) the application is loaded
   _mainMenu.getMenuItemById( _applicationSettings.highlightjsStyle ).checked = true
   _mainWindow.webContents.send( ipc.messages.changeHighlightjsStyle, _applicationSettings.highlightjsStyle )
