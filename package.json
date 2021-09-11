@@ -6,8 +6,10 @@
     "markdown",
     "md",
     "viewer",
-    "standalone"
+    "standalone",
+    "electron"
   ],
+  "homepage": "https://github.com/khatastroffik/mdview",
   "repository": {
     "type": "git",
     "url": "https://github.com/khatastroffik/mdview.git"
@@ -69,6 +71,7 @@
   },
   "dependencies": {
     "@electron/remote": "1.2.1",
+    "about-window": "^1.14.0",
     "github-markdown-css": "4.0.0",
     "github-markdown-dracula-css": "4.0.3",
     "highlight.js": "11.2.0",

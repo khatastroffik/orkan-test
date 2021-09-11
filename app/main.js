@@ -14,6 +14,8 @@ const ApplicationSettings = require( './lib/settings/application-settings' )
 const DocumentSettings = require( './lib/settings/document-settings' )
 const { printToPDF } = require( './lib/pdf' )
 const { generateStylesSubmenu } = require( './lib/styler/highlightjs' )
+const { showAboutWindow } = require( './lib/messageBoxes/about' )
+
 
 const WINDOW_WIDTH = 1024
 const WINDOW_HEIGHT = 768
@@ -242,7 +244,7 @@ function createWindow() {
       } ) ),
     },
     {
-      label: "Tools",
+      label: "?",
       submenu: [
         {
           label: "Developer Tools",
@@ -251,6 +253,13 @@ function createWindow() {
             mainWindow.webContents.openDevTools()
           },
         },
+        {
+          label: "About...",
+          accelerator: "F1",
+          click() {
+            showAboutWindow(mainWindow);
+          }
+        }
       ],
     },
   ] )
