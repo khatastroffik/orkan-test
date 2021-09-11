@@ -3,7 +3,7 @@ const path = require( "path" )
 
 function showAboutWindow(parentWindow) {
   let aboutWin = openAboutWindow( {
-    icon_path: path.join( __dirname, '../../../build/icon.png' ),
+    icon_path: path.join( __dirname, '../../assets/icon.png' ),
     win_options: {
       parent: parentWindow,
       modal: true,
