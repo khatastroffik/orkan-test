@@ -1,5 +1,18 @@
 # Markdown Viewer - CHANGELOG
 
+## [2.3.0](https://github.com/khatastroffik/mdview/compare/v2.2.2...v2.3.0) (2021-09-11)
+
+
+### Features
+
+* **issue #15:** implement "print to PDF" functionality ([c206307](https://github.com/khatastroffik/mdview/commit/c20630705dad318dbf61187824b0e0e061ac9125)), closes [issue #15](https://github.com/khatastroffik/mdview/issues/15)
+* **issue 23:** add an "About..." dialog to display information and links related to the application ([d0e634f](https://github.com/khatastroffik/mdview/commit/d0e634f598f84ba25b6f4df80a4d337306e1c677))
+
+
+### Documentation
+
+* update README, CONTRIBUTING, LICENSE and screenshots files, add commit messages guideline ([b31d792](https://github.com/khatastroffik/mdview/commit/b31d79289188f7559144fb7674f8d99acfd097e8))
+
 ### [2.2.2](https://github.com/khatastroffik/mdview/compare/v2.2.1...v2.2.2) (2021-09-09)
 
 ### [2.2.1](https://github.com/khatastroffik/mdview/compare/v2.2.0...v2.2.1) (2021-09-09)
