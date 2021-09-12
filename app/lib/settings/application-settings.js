@@ -1,33 +1,35 @@
 "use strict"
 
-const Settings = require('./settings')
+const Settings = require( './settings' )
 
 const APPLICATION_SETTINGS_FILENAME = "application-settings.json"
 
 class ApplicationSettings extends Settings {
   THEME_KEY = "theme"
   HLJS_KEY = "highlightjs"
+  LASTFILES_KEY = 'lastfiles'
   LIGHT_THEME = "light"
   DARK_THEME = "dark"
   ALLOWED_THEMES = [this.LIGHT_THEME, this.DARK_THEME]
   _electronNativeTheme
 
   constructor ( settingsFileName = null, electronInstance = null ) {
-    if (ApplicationSettings._singleton) {
+    console.log('################');
+    if ( ApplicationSettings._singleton ) {
       return ApplicationSettings._singleton
     }
-    super( settingsFileName ?? APPLICATION_SETTINGS_FILENAME , electronInstance )
+    super( settingsFileName ?? APPLICATION_SETTINGS_FILENAME, electronInstance )
     ApplicationSettings._singleton = this
     this._electronNativeTheme = this._electronInstance.nativeTheme
   }
 
-  get highlightjsStyle(){
+  get highlightjsStyle() {
     // if no already saved setting is available (e.g. initial app start before any style has been saved)
     // then we return an empty string -> the default style from the "index.html" will then be used
     return this._settingsData[this.HLJS_KEY] ?? ""
   }
 
-  set highlightjsStyle(hjsStyle){
+  set highlightjsStyle( hjsStyle ) {
     this._settingsData[this.HLJS_KEY] = hjsStyle
     this.save()
   }
@@ -44,6 +46,31 @@ class ApplicationSettings extends Settings {
     }
     this._settingsData[this.THEME_KEY] = this._electronNativeTheme.themeSource = value
     this.save()
+  }
+
+  addLastOpenedFile( filePath ) {
+    let allFiles = this.lastOpenedFiles;
+    // check if file already in list
+    if ( filePath in allFiles ) {
+      // remove file from its current position
+      let itemPos = allFiles.indexOf( filePath );
+      allFiles.splice( itemPos, 1 );
+    }
+    // add file to the top of the list
+    allFiles.unshift( filePath );
+    this.lastOpenedFiles = allFiles;
+  }
+
+  get lastOpenedFiles() {
+    return this._settingsData[this.LASTFILES_KEY] ?? [];
+  }
+  set lastOpenedFiles( allFiles ) {
+    // limit size of the list to 10 files
+    if ( allFiles.length > 10 ) {
+      allFiles.length = 10;
+    }
+    this._settingsData[this.LASTFILES_KEY] = allFiles;
+    this.save();
   }
 
 }
