@@ -9,9 +9,9 @@ describe('Library "file"', () => {
     const nonMdFilePath = path.join(__dirname, "mocking.js")
     const binFilePath = path.join(__dirname, "documents", "font1", "Daedric.ttf")
 
-    describe("file.open", () => {
+    describe("file.openEncodedFile", () => {
         it("opens a file", () => {
-            const content = file.open(mdFilePath, "utf8")
+            const content = file.openEncodedFile(mdFilePath, "utf8")
             assert.isTrue(content.includes("Test file"))
         })
     })

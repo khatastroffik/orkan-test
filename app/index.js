@@ -93,7 +93,7 @@ electron.ipcRenderer.on(
     contentBlocking.changeInfoElementVisiblity( false )
     clearStatusBar()
 
-    let content = file.open( filePath, encoding )
+    let content = file.openEncodedFile( filePath, encoding )
     let generateRawText = false
     if ( !file.isMarkdown( filePath ) ) {
       const pathParts = filePath.split( "." )
