@@ -221,9 +221,15 @@ function generateMainMenu(win){
       label: "?",
       submenu: [
         {
-          label: "Developer Tools",
+          label: "Toggle Developer Tools",
           accelerator: "F10",
-          click() { win.webContents.openDevTools() },
+          click() {
+            if (win.webContents.isDevToolsOpened()){
+              win.webContents.closeDevTools();
+            } else {
+              win.webContents.openDevTools({ mode: 'detach' });
+            }
+          }
         },
         { type: "separator" },
         { 
@@ -289,6 +295,7 @@ function createWindow() {
       navigation.back()
     }
   } )
+  mainWindow.webContents.on("devtools-opened", () => {mainWindow.focus()});
   return [mainWindow, generateMainMenu(mainWindow)]
 }
 
