@@ -11,7 +11,6 @@ const stylePrefix = "user_choosen_style_"
 
 function generateStylesSubmenu() {
   let cssFolder = path.join( __dirname, "../../css" )
-  console.log(cssFolder);
   let cssFilesFromDir = fs.readdirSync( cssFolder )
   let _applicationSettings = new ApplicationSettings()
   let win = BrowserWindow.getFocusedWindow()

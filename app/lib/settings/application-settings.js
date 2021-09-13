@@ -14,7 +14,6 @@ class ApplicationSettings extends Settings {
   _electronNativeTheme
 
   constructor ( settingsFileName = null, electronInstance = null ) {
-    console.log('################');
     if ( ApplicationSettings._singleton ) {
       return ApplicationSettings._singleton
     }
@@ -48,29 +47,32 @@ class ApplicationSettings extends Settings {
     this.save()
   }
 
-  addLastOpenedFile( filePath ) {
+  removeLastOpenedFile( filePath ) {
     let allFiles = this.lastOpenedFiles;
-    // check if file already in list
-    if ( filePath in allFiles ) {
-      // remove file from its current position
-      let itemPos = allFiles.indexOf( filePath );
+    let itemPos = allFiles.indexOf( filePath );
+    if (itemPos >= 0) {
       allFiles.splice( itemPos, 1 );
+      this._settingsData[this.LASTFILES_KEY] = allFiles;
+      this.save();
     }
-    // add file to the top of the list
-    allFiles.unshift( filePath );
-    this.lastOpenedFiles = allFiles;
   }
 
-  get lastOpenedFiles() {
-    return this._settingsData[this.LASTFILES_KEY] ?? [];
-  }
-  set lastOpenedFiles( allFiles ) {
+  addLastOpenedFile( filePath ) {
+    // remove file from its current position, if in the list   
+    this.removeLastOpenedFile(filePath);
+    // add file to the top of the list
+    let allFiles = this.lastOpenedFiles;
+    allFiles.unshift( filePath );
     // limit size of the list to 10 files
     if ( allFiles.length > 10 ) {
       allFiles.length = 10;
     }
     this._settingsData[this.LASTFILES_KEY] = allFiles;
     this.save();
+  }
+
+  get lastOpenedFiles() {
+    return this._settingsData[this.LASTFILES_KEY] ?? [];
   }
 
 }
