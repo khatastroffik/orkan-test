@@ -64,7 +64,7 @@ function generateLastFilesMenuTemplate(){
   allFiles.forEach(file => {
     fileCounter++;
     lastfilesSubMenu.push( {
-      label: `${fileCounter}: ${file}`, 
+      label: `&${fileCounter % 10}: ${file}`, 
       type: "normal",
       id: file
     } ) 

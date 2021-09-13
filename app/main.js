@@ -101,11 +101,16 @@ function restorePosition() {
   _mainWindow.webContents.send( ipc.messages.restorePosition, _scrollPosition )
 }
 
+/**
+ * generate/update the application main menu
+ * @param {*} win the electron window to add the menu to
+ * @returns the newly created menu
+ */
 function generateMainMenu(win){
   // generate the static menu from template
   const newMenu = Menu.buildFromTemplate( [
     {
-      label: "File",
+      label: "&File",
       id: "filemenu",
       submenu: [
         {
@@ -148,11 +153,11 @@ function generateMainMenu(win){
       ],
     },
     {
-      label: "Edit",
+      label: "&Edit",
       submenu: [{ role: "copy" }],
     },
     {
-      label: "View",
+      label: "&View",
       submenu: [
         {
           label: "Back",
@@ -187,6 +192,7 @@ function generateMainMenu(win){
         { type: "separator" },
         {
           label: "Switch Theme",
+          accelerator: "F8",
           click() {
             _applicationSettings.theme = electron.nativeTheme.shouldUseDarkColors
               ? _applicationSettings.LIGHT_THEME
@@ -194,13 +200,13 @@ function generateMainMenu(win){
           },
         },
         {
-          label: "Change Code Style",
+          label: "Change Code &Style",
           submenu: generateStylesSubmenu(),
         },
       ],
     },
     {
-      label: "Encoding",
+      label: "En&coding",
       submenu: encodingLib.ENCODINGS.map( encoding => ( {
         label: encoding,
         type: "radio",
