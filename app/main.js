@@ -225,6 +225,16 @@ function generateMainMenu(win){
           accelerator: "F10",
           click() { win.webContents.openDevTools() },
         },
+        { type: "separator" },
+        { 
+          label: "Clear the 'last opened files' list",
+          click() { 
+            let _applicationSettings = new ApplicationSettings();
+            _applicationSettings.clearLastOpenedFilesList();
+            generateMainMenu(win);
+          }
+        },
+        { type: "separator" },
         {
           label: "About...",
           accelerator: "F1",

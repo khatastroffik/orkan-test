@@ -47,6 +47,11 @@ class ApplicationSettings extends Settings {
     this.save()
   }
 
+  clearLastOpenedFilesList(){
+    this._settingsData[this.LASTFILES_KEY] = [];
+    this.save();
+  }
+
   removeLastOpenedFile( filePath ) {
     let allFiles = this.lastOpenedFiles;
     let itemPos = allFiles.indexOf( filePath );
