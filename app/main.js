@@ -15,6 +15,10 @@ const DocumentSettings = require( './lib/settings/document-settings' )
 const { printToPDF } = require( './lib/pdf' )
 const { generateStylesSubmenu } = require( './lib/styler/highlightjs' )
 const { showAboutWindow } = require( './lib/messageBoxes/about' )
+const { generateLastFilesMenuTemplate } = require('./lib/file')
+const { MenuItem } = require('electron');
+const { Menu } = require( 'electron' )
+
 
 
 const WINDOW_WIDTH = 1024
@@ -42,13 +46,22 @@ function error( msg ) {
 }
 
 function openFile( filePath, internalTarget ) {
+  let _applicationSettings = new ApplicationSettings();
   if ( !fs.existsSync( filePath ) ) {
+    _applicationSettings.removeLastOpenedFile(filePath);
     error( `Unknown file: "${filePath}"` )
   } else if ( !fs.lstatSync( filePath ).isFile() ) {
+    _applicationSettings.removeLastOpenedFile(filePath);
     error( "Given path does not lead to a file" )
   } else {
     navigation.go( filePath, internalTarget )
     _lastModificationTime = fs.statSync( filePath ).mtimeMs
+    if (DEFAULT_FILE != filePath) {
+      // add current file to the "last 10 files"
+      _applicationSettings.addLastOpenedFile(filePath);
+      // update the menu´s "last 10 files"
+      generateMainMenu(_mainWindow);
+    }
   }
 }
 
@@ -88,85 +101,50 @@ function restorePosition() {
   _mainWindow.webContents.send( ipc.messages.restorePosition, _scrollPosition )
 }
 
-function createWindow() {
-  const mainWindow = new electron.BrowserWindow( {
-    width: WINDOW_WIDTH,
-    height: WINDOW_HEIGHT,
-    minWidth: WINDOW_MIN_WIDTH,
-    minHeight: WINDOW_MIN_HEIGHT,
-    backgroundColor: "#fff",
-    // autoHideMenuBar: true,
-    webPreferences: {
-      nodeIntegration: true,
-      enableRemoteModule: true,
-      contextIsolation: false,
-    },
-  } )
-  mainWindow.loadFile( path.join( __dirname, "index.html" ) )
-  mainWindow.on( "closed", () => ( _mainWindow = null ) )
-  mainWindow.webContents.on( "did-finish-load", () => {
-    if ( _isReloading ) {
-      restorePosition()
-      _isReloading = false
-    }
-  } )
-  mainWindow.webContents.on( "before-input-event", ( event, input ) => {
-    if ( input.type === "keyDown" && input.key === "Backspace" ) {
-      event.preventDefault()
-      navigation.back()
-    }
-  } )
-
-  const mainMenu = electron.Menu.buildFromTemplate( [
+function generateMainMenu(win){
+  // generate the static menu from template
+  const newMenu = Menu.buildFromTemplate( [
     {
       label: "File",
+      id: "filemenu",
       submenu: [
         {
           label: "Open",
+          id: "openfile",
           accelerator: "CmdOrCtrl+O",
           async click() {
             try {
               const result = await electron.dialog.showOpenDialog( {
                 properties: ["openFile"],
-                filters: [
-                  {
-                    name: "Markdown",
-                    extensions: common.FILE_EXTENSIONS,
-                  },
-                ],
+                filters: [{name: "Markdown", extensions: common.FILE_EXTENSIONS}]
               } )
               if ( !result.canceled ) {
                 const filePath = result.filePaths[0]
                 openFile( filePath, null )
-                _mainMenu.getMenuItemById( encodingLib.toMenuItemID( _documentSettings.getDocumentEncoding( filePath ) ) ).checked = true
+                Menu.getApplicationMenu().getMenuItemById( encodingLib.toMenuItemID( _documentSettings.getDocumentEncoding( filePath ) ) ).checked = true
               }
             } catch ( e ) {
               error( `Problem at opening file:\n ${e}` )
             }
-          },
+          }
         },
+        { label:'last 10 files', id: 'last10files', visible: false}, // position mark
         { type: "separator" },
         {
           label: "Print",
           accelerator: "Ctrl+P",
-          click() {
-            mainWindow.webContents.print()
-          },
+          click() { win.webContents.print() }
         },
         {
           label: "Print to PDF",
-          click() {
-            printToPDF()
-          },
+          click() { printToPDF() }
         },
         { type: "separator" },
         {
           label: "Quit",
           accelerator: "Esc",
-          click() {
-            mainWindow.close()
-          },
-        },
+          click() { win.close() }
+        }
       ],
     },
     {
@@ -180,41 +158,31 @@ function createWindow() {
           label: "Back",
           accelerator: "Alt+Left",
           id: navigation.BACK_MENU_ID,
-          click() {
-            navigation.back()
-          },
+          click() { navigation.back() },
         },
         {
           label: "Forward",
           accelerator: "Alt+Right",
           id: navigation.FORWARD_MENU_ID,
-          click() {
-            navigation.forward()
-          },
+          click() { navigation.forward() },
         },
         { type: "separator" },
         {
           label: "Refresh",
           accelerator: "F5",
-          click() {
-            reload( false )
-          },
+          click() { reload( false ) },
         },
         {
           label: "Unblock All External Content",
           accelerator: "Alt+U",
           id: contentBlocking.UNBLOCK_CONTENT_MENU_ID,
-          click() {
-            contentBlocking.unblockAll()
-          },
+          click() { contentBlocking.unblockAll() },
         },
         {
           label: "Toggle Raw Text View",
           accelerator: "Ctrl+U",
           id: rawText.VIEW_RAW_TEXT_MENU_ID,
-          click() {
-            rawText.switchRawView()
-          },
+          click() { rawText.switchRawView() },
         },
         { type: "separator" },
         {
@@ -249,23 +217,63 @@ function createWindow() {
         {
           label: "Developer Tools",
           accelerator: "F10",
-          click() {
-            mainWindow.webContents.openDevTools()
-          },
+          click() { win.webContents.openDevTools() },
         },
         {
           label: "About...",
           accelerator: "F1",
-          click() {
-            showAboutWindow(mainWindow);
-          }
+          click() { showAboutWindow(win) }
         }
       ],
     },
   ] )
-  electron.Menu.setApplicationMenu( mainMenu )
 
-  return [mainWindow, mainMenu]
+  // add dynamically the "last 10 files" menu items
+  let fileMenuSubmenu = newMenu.getMenuItemById('filemenu').submenu;
+  let newItemPosition = fileMenuSubmenu.items.findIndex(item => item.id == 'last10files') + 1; 
+  generateLastFilesMenuTemplate().forEach(lastfileMenuItem => {     
+      lastfileMenuItem.click = (item) => {
+        openFile(item.id, null);
+        Menu.getApplicationMenu().getMenuItemById( encodingLib.toMenuItemID( _documentSettings.getDocumentEncoding( item.id ) ) ).checked = true
+      }
+      fileMenuSubmenu.insert(newItemPosition, new MenuItem (lastfileMenuItem));
+      newItemPosition++;
+    });
+
+  // activate the menu
+  Menu.setApplicationMenu(newMenu);
+  return newMenu;
+}
+
+function createWindow() {
+  const mainWindow = new electron.BrowserWindow( {
+    width: WINDOW_WIDTH,
+    height: WINDOW_HEIGHT,
+    minWidth: WINDOW_MIN_WIDTH,
+    minHeight: WINDOW_MIN_HEIGHT,
+    backgroundColor: "#fff",
+    // autoHideMenuBar: true,
+    webPreferences: {
+      nodeIntegration: true,
+      enableRemoteModule: true,
+      contextIsolation: false,
+    },
+  } )
+  mainWindow.loadFile( path.join( __dirname, "index.html" ) )
+  mainWindow.on( "closed", () => ( _mainWindow = null ) )
+  mainWindow.webContents.on( "did-finish-load", () => {
+    if ( _isReloading ) {
+      restorePosition()
+      _isReloading = false
+    }
+  } )
+  mainWindow.webContents.on( "before-input-event", ( event, input ) => {
+    if ( input.type === "keyDown" && input.key === "Backspace" ) {
+      event.preventDefault()
+      navigation.back()
+    }
+  } )
+  return [mainWindow, generateMainMenu(mainWindow)]
 }
 
 electron.app.on( "ready", () => {
