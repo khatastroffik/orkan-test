@@ -242,7 +242,7 @@ function handleFoundInPage( event, result ) {
   document.getElementById( "search-result" ).innerText = `${result.activeMatchOrdinal}/${result.matches}`;
 }
 
-function searchNext(){
+function searchNext() {
   let options = {
     forward: true,
     findNext: false,
@@ -253,15 +253,17 @@ function searchNext(){
   console.log( 'FIND BOX: SEARCH-NEXT ', requestId );
 }
 
-function doSearch() {
-  let options = {
-    forward: true,
-    findNext: true,
-    matchCase: false
+function doSearch( event ) {
+  if ( event.key === "Enter" ) {
+    let options = {
+      forward: true,
+      findNext: true,
+      matchCase: false
+    }
+    let searchText = document.getElementById( "search-text" ).value;
+    const requestId = remote.BrowserWindow.getFocusedWindow().webContents.findInPage( searchText, options );
+    console.log( 'FIND BOX: SEARCHING ', requestId );
   }
-  let searchText = document.getElementById( "search-text" ).value;
-  const requestId = remote.BrowserWindow.getFocusedWindow().webContents.findInPage( searchText, options );
-  console.log( 'FIND BOX: SEARCHING ', requestId );
 }
 
 
@@ -270,17 +272,18 @@ function closeFindBox() {
   remote.BrowserWindow.getFocusedWindow().webContents.stopFindInPage( 'clearSelection' );
   document.getElementById( "find-box" ).style.setProperty( "visibility", "hidden" );
   document.getElementById( "search-close" ).removeEventListener( 'click', closeFindBox );
-  document.getElementById( "do-search" ).removeEventListener( 'click', doSearch );
   document.getElementById( "search-next" ).removeEventListener( 'click', searchNext );
+  document.getElementById( "search-text" ).removeEventListener( "keyup", doSearch );
 }
 
 function showFindBox() {
   console.log( 'FIND BOX: SHOWING' );
   document.getElementById( "find-box" ).style.setProperty( "visibility", "visible" );
   document.getElementById( "search-close" ).addEventListener( 'click', closeFindBox );
-  document.getElementById( "do-search" ).addEventListener( 'click', doSearch );
+  document.getElementById( "search-text" ).addEventListener( "keyup", doSearch );
   document.getElementById( "search-next" ).addEventListener( 'click', searchNext );
   remote.BrowserWindow.getFocusedWindow().webContents.on( 'found-in-page', handleFoundInPage );
+  document.getElementById( "search-result" ).innerText = `-/-`;
   document.getElementById( "search-text" ).focus();
 }
 
@@ -289,7 +292,7 @@ electron.ipcRenderer.on( ipc.messages.showFindBox, () => {
 } );
 
 electron.ipcRenderer.on( ipc.messages.findNext, () => {
-  if (document.getElementById( "find-box" ).style.getPropertyValue( "visibility") == 'visible') {
+  if ( document.getElementById( "find-box" ).style.getPropertyValue( "visibility" ) == 'visible' ) {
     searchNext();
   }
 } );
