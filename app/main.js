@@ -154,7 +154,22 @@ function generateMainMenu(win){
     },
     {
       label: "&Edit",
-      submenu: [{ role: "copy" }],
+      submenu: [
+        { role: "copy" }, 
+        { 
+          label: "Find", 
+          id: "show-find-box", 
+          accelerator:"CmdOrCtrl+F",
+          click() { win.webContents.send(ipc.messages.showFindBox) }
+        },
+        { 
+          label: "Find next...", 
+          id: "find-next", 
+          accelerator:"F3",
+          click() { win.webContents.send(ipc.messages.findNext) }
+        },
+
+      ],
     },
     {
       label: "&View",
@@ -289,12 +304,7 @@ function createWindow() {
       _isReloading = false
     }
   } )
-  mainWindow.webContents.on( "before-input-event", ( event, input ) => {
-    if ( input.type === "keyDown" && input.key === "Backspace" ) {
-      event.preventDefault()
-      navigation.back()
-    }
-  } )
+
   mainWindow.webContents.on("devtools-opened", () => {mainWindow.focus()});
   return [mainWindow, generateMainMenu(mainWindow)]
 }

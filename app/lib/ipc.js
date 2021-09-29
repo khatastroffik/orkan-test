@@ -20,4 +20,7 @@ exports.messages = {
     changeHighlightjsStyle: "change-highlightjs-style",
     showErrorDialog: "show-error-dialog",
     showSuccessDialog: "show-success-dialog",
+    showFindBox: "show-find-box",
+    hideFindBox: "hide-find-box",
+    findNext: "find-text-in-page",
 }
