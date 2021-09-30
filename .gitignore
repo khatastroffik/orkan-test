@@ -1,0 +1,8 @@
+node_modules/
+.vscode/
+dist/
+
+package-lock.json
+*.log
+
+!.vscode/launch.json
