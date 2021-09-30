@@ -147,7 +147,7 @@ function generateMainMenu(win){
         { type: "separator" },
         {
           label: "Quit",
-          accelerator: "Esc",
+          accelerator: "Alt+F4",
           click() { win.close() }
         }
       ],

@@ -253,6 +253,17 @@ function searchNext() {
   console.log( 'FIND BOX: SEARCH-NEXT ', requestId );
 }
 
+function searchPrevious() {
+  let options = {
+    forward: false,
+    findNext: false,
+    matchCase: false
+  }
+  let searchText = document.getElementById( "search-text" ).value;
+  const requestId = remote.BrowserWindow.getFocusedWindow().webContents.findInPage( searchText, options );
+  console.log( 'FIND BOX: SEARCH-PREVIOUS ', requestId );
+}
+
 function doSearch( event ) {
   if ( event.key === "Enter" ) {
     let options = {
@@ -266,25 +277,31 @@ function doSearch( event ) {
   }
 }
 
+function handleFindBoxKeyStrokes(event) {
+  if ( event.key === "Escape" ) {
+    closeFindBox();
+  } else if ( event.shiftKey && event.key === "F3" ) {
+    searchPrevious();
+  }
+}
 
 function closeFindBox() {
   console.log( 'FIND BOX: CLOSING' );
   remote.BrowserWindow.getFocusedWindow().webContents.stopFindInPage( 'clearSelection' );
+  remote.BrowserWindow.getFocusedWindow().webContents.removeListener( 'found-in-page', handleFoundInPage );
+  window.removeEventListener( 'keyup', handleFindBoxKeyStrokes, false);
   document.getElementById( "find-box" ).style.setProperty( "visibility", "hidden" );
-  document.getElementById( "search-close" ).removeEventListener( 'click', closeFindBox );
-  document.getElementById( "search-next" ).removeEventListener( 'click', searchNext );
   document.getElementById( "search-text" ).removeEventListener( "keyup", doSearch );
 }
 
 function showFindBox() {
   console.log( 'FIND BOX: SHOWING' );
-  document.getElementById( "find-box" ).style.setProperty( "visibility", "visible" );
-  document.getElementById( "search-close" ).addEventListener( 'click', closeFindBox );
   document.getElementById( "search-text" ).addEventListener( "keyup", doSearch );
-  document.getElementById( "search-next" ).addEventListener( 'click', searchNext );
-  remote.BrowserWindow.getFocusedWindow().webContents.on( 'found-in-page', handleFoundInPage );
+  document.getElementById( "find-box" ).style.setProperty( "visibility", "visible" );
   document.getElementById( "search-result" ).innerText = `-/-`;
+  window.addEventListener('keyup', handleFindBoxKeyStrokes, false);
   document.getElementById( "search-text" ).focus();
+  remote.BrowserWindow.getFocusedWindow().webContents.on( 'found-in-page', handleFoundInPage );
 }
 
 electron.ipcRenderer.on( ipc.messages.showFindBox, () => {
